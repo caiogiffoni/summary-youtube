@@ -1,8 +1,6 @@
 import math
 import os
 import re
-import sys
-from typing import Union
 
 import openai
 from dotenv import load_dotenv
