@@ -2,6 +2,7 @@ import logging
 import math
 import os
 import re
+import sys
 
 import openai
 from dotenv import load_dotenv
@@ -10,13 +11,12 @@ from youtube_transcript_api import YouTubeTranscriptApi
 
 from app.models import SummarizeText
 
+from .logging_config import LOG_LEVELS
+
 load_dotenv()
 
 app = FastAPI()
 
-logging.config.fileConfig(
-    "app/core/logging.conf", disable_existing_loggers=False
-)
 logger = logging.getLogger(__name__)
 
 
@@ -49,9 +49,10 @@ async def summarize(body: SummarizeText):
 
     def get_summary(transcript: list):
         logger.info("Generating summary")
+        request_length = len(transcript)
         openai.api_key = os.getenv("OPENAI_API")
         response = []
-        for part in transcript:
+        for idx, part in enumerate(transcript):
             prompt = f"Resuma essa transcição de vídeo do Youtube: '{part}'"
             response.append(
                 openai.Completion.create(
@@ -63,13 +64,14 @@ async def summarize(body: SummarizeText):
                     temperature=0.8,
                 )
             )
+            logger.info(f"Generated {idx+1} of {request_length} responses")
         treated_transcript = [t["choices"][0]["text"] for t in response]
         return " ".join(treated_transcript)
 
     logger.info("Link Received")
     transcript = get_transcript(body.link)
-    logger.info(f"transcript obtained for video_id")
+    logger.info(f"Transcript obtained for video_id")
     summary = get_summary(transcript)
     logger.info("Summary Generated!")
 
-    return {"summary"}
+    return {summary}
