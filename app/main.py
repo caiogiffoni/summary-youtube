@@ -64,13 +64,13 @@ async def summarize(body: SummarizeText):
                     temperature=0.8,
                 )
             )
-            logger.info(f"Generated {idx+1} of {request_length} responses")
+            logger.info(f"Generated {idx+1} of {request_length}")
         treated_transcript = [t["choices"][0]["text"] for t in response]
         return " ".join(treated_transcript)
 
     logger.info("Link Received")
     transcript = get_transcript(body.link)
-    logger.info(f"Transcript obtained for video_id")
+    logger.info(f"Transcript obtained for requested video")
     summary = get_summary(transcript)
     logger.info("Summary Generated!")
 
