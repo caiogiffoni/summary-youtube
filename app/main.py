@@ -1,3 +1,4 @@
+import logging
 import math
 import os
 import re
@@ -7,19 +8,26 @@ from dotenv import load_dotenv
 from fastapi import FastAPI
 from youtube_transcript_api import YouTubeTranscriptApi
 
-from models import SummarizeText
+from app.models import SummarizeText
 
 load_dotenv()
 
 app = FastAPI()
 
+logging.config.fileConfig(
+    "app/core/logging.conf", disable_existing_loggers=False
+)
+logger = logging.getLogger(__name__)
+
 
 @app.post("/summarize")
 async def summarize(body: SummarizeText):
     def get_transcript(link):
+        logger.info(f"Link received: {body.link}")
         video_id = re.findall(
             r"https:\/\/.*\/(?:watch\?v=)?(?P<video_id>[\w-]+)", link
         )[0]
+        logger.info(f"Video_id obtained: {video_id}")
         transcript_response = YouTubeTranscriptApi.get_transcripts(
             [video_id], languages=["pt", "en"]
         )
@@ -40,6 +48,7 @@ async def summarize(body: SummarizeText):
         return [" ".join(t) for t in transcript_list]
 
     def get_summary(transcript: list):
+        logger.info("Generating summary")
         openai.api_key = os.getenv("OPENAI_API")
         response = []
         for part in transcript:
@@ -57,7 +66,10 @@ async def summarize(body: SummarizeText):
         treated_transcript = [t["choices"][0]["text"] for t in response]
         return " ".join(treated_transcript)
 
+    logger.info("Link Received")
     transcript = get_transcript(body.link)
+    logger.info(f"transcript obtained for video_id")
     summary = get_summary(transcript)
+    logger.info("Summary Generated!")
 
-    return {summary}
+    return {"summary"}
