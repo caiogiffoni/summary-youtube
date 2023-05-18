@@ -6,7 +6,7 @@ import sys
 
 import openai
 from dotenv import load_dotenv
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from youtube_transcript_api import YouTubeTranscriptApi
 
 from app.models import SummarizeText
@@ -51,19 +51,23 @@ async def summarize(body: SummarizeText):
         logger.info("Generating summary")
         request_length = len(transcript)
         openai.api_key = os.getenv("OPENAI_API")
+        if not openai.api_key: raise HTTPException(status_code=400, detail="AI Token not found")
         response = []
         for idx, part in enumerate(transcript):
             prompt = f"Resuma essa transcição de vídeo do Youtube: '{part}'"
-            response.append(
-                openai.Completion.create(
-                    engine="text-davinci-003",
-                    prompt=prompt,
-                    max_tokens=2048,
-                    n=1,
-                    stop=None,
-                    temperature=0.8,
+            try:
+                response.append(
+                    openai.Completion.create(
+                        engine="text-davinci-003",
+                        prompt=prompt,
+                        max_tokens=2048,
+                        n=1,
+                        stop=None,
+                        temperature=0.8,
+                    )
                 )
-            )
+            except:
+                raise HTTPException(status_code=401, detail="AI Token expired")
             logger.info(f"Generated {idx+1} of {request_length}")
         treated_transcript = [t["choices"][0]["text"] for t in response]
         return " ".join(treated_transcript)
