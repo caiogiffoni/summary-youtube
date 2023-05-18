@@ -51,7 +51,9 @@ async def summarize(body: SummarizeText):
         logger.info("Generating summary")
         request_length = len(transcript)
         openai.api_key = os.getenv("OPENAI_API")
-        if not openai.api_key: raise HTTPException(status_code=400, detail="AI Token not found")
+        if not openai.api_key: 
+            logger.warn("No token loaded")
+            raise HTTPException(status_code=401, detail="AI Token expired")
         response = []
         for idx, part in enumerate(transcript):
             prompt = f"Resuma essa transcição de vídeo do Youtube: '{part}'"
@@ -67,6 +69,7 @@ async def summarize(body: SummarizeText):
                     )
                 )
             except:
+                logger.warn("Token expired")
                 raise HTTPException(status_code=401, detail="AI Token expired")
             logger.info(f"Generated {idx+1} of {request_length}")
         treated_transcript = [t["choices"][0]["text"] for t in response]
