@@ -21,6 +21,7 @@ Para essa aplicação, não foi utilizado figma
 - [x] Python
 - [x] FastAPI
 - [x] Youtube Transcript API
+- [x] OpenAI Request
 
 ## 🌐 Deploy
 
