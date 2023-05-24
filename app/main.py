@@ -101,4 +101,4 @@ async def summarize(body: SummarizeText, request: Request):
     summary = get_summary(transcript)
     logger.info("Summary Generated!")
 
-    return {summary}
+    return  {"summary": summary}
